@@ -21,7 +21,6 @@ VFC.App = {
   _applySettings() {
     const data = VFC.Storage.getData();
     const s = data.settings;
-    const prevKey = data.currentKey;
 
     s.year = parseInt(document.getElementById('settingYear').value) || new Date().getFullYear();
     s.month = parseInt(document.getElementById('settingMonth').value) || 1;
@@ -31,7 +30,6 @@ VFC.App = {
     s.defaultKm = parseFloat(document.getElementById('settingDefaultKm').value) || 0;
     s.defaultPassengers = parseInt(document.getElementById('settingDefaultPassengers').value) || 1;
 
-
     const newKey = VFC.Utils.generateMonthKey(s.year, s.month);
     if (newKey !== data.currentKey) {
       VFC.Storage.switchToMonth(s.year, s.month);
@@ -39,19 +37,36 @@ VFC.App = {
       VFC.Storage.saveCurrentMonth();
     }
 
+    const active = data.petrolHistory.filter(p => p.price > 0);
     for (const dateKey in data.dailyData) {
       const day = data.dailyData[dateKey];
       if (!day.edited) {
         day.kmDriven = s.defaultKm;
         day.passengers = s.defaultPassengers;
       }
-      day.petrolPrice = VFC.Utils.getPetrolPriceForDate(dateKey, data.petrolHistory);
+      day.petrolPrice = VFC.Utils.getPetrolPriceForDate(dateKey, active);
     }
 
     VFC.Storage.saveCurrentMonth();
     VFC.Storage.save();
     VFC.UI.renderAll();
     VFC.UI.showToast('Settings applied');
+  },
+
+  _reapplyPetrolPrices() {
+    const data = VFC.Storage.getData();
+    const active = data.petrolHistory.filter(p => p.price > 0);
+    for (const dateKey in data.dailyData) {
+      const price = VFC.Utils.getPetrolPriceForDate(dateKey, active);
+      if (price > 0 || !data.dailyData[dateKey].petrolPrice) {
+        data.dailyData[dateKey].petrolPrice = price;
+      }
+    }
+    VFC.Storage.saveCurrentMonth();
+    this._scheduleSave();
+    VFC.UI.renderDailyTable();
+    VFC.UI.renderDashboard();
+    VFC.Charts.update();
   },
 
   _onPetrolChange(e) {
@@ -67,14 +82,7 @@ VFC.App = {
       entry.price = parseFloat(el.value) || 0;
     }
 
-    for (const dateKey in data.dailyData) {
-      data.dailyData[dateKey].petrolPrice = VFC.Utils.getPetrolPriceForDate(dateKey, data.petrolHistory);
-    }
-    VFC.Storage.saveCurrentMonth();
-    this._scheduleSave();
-    VFC.UI.renderDailyTable();
-    VFC.UI.renderDashboard();
-    VFC.Charts.update();
+    this._reapplyPetrolPrices();
   },
 
   _onDailyChange(e) {
@@ -131,12 +139,8 @@ VFC.App = {
   _deletePetrolPrice(id) {
     const data = VFC.Storage.getData();
     data.petrolHistory = data.petrolHistory.filter(e => e.id != id);
-    VFC.Storage.saveCurrentMonth();
-    this._scheduleSave();
+    this._reapplyPetrolPrices();
     VFC.UI.renderPetrolHistory();
-    VFC.UI.renderDailyTable();
-    VFC.UI.renderDashboard();
-    VFC.Charts.update();
   },
 
   _scheduleSave() {

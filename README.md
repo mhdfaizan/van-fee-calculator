@@ -15,7 +15,7 @@ Configure the month, monthly van fee, base petrol price (the price you budgeted 
 
 ### 2. Enter Petrol Price Changes
 
-Instead of entering a price for every single day, you only enter dates **when the petrol price changes**. For example, if price starts at ₱311/L on July 1 and rises to ₱316.15/L on July 18, you add two entries. The app automatically fills the correct price for each day in between.
+Instead of entering a price for every single day, you only enter dates **when the petrol price changes**. For example, if price starts at Rs. 311/L on July 1 and rises to Rs. 316.15/L on July 18, you add two entries. The app automatically fills the correct price for each day in between.
 
 ### 3. Review and Adjust Daily Data
 
