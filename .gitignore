@@ -3,3 +3,6 @@
 Thumbs.db
 *.swp
 *.swo
+
+# Test artifacts
+.playwright-mcp/
