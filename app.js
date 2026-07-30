@@ -7,18 +7,8 @@ VFC.App = {
   init() {
     VFC.Storage.init();
     VFC.UI.init();
-    this._bindSettingsEvents();
     this._bindKeyboardShortcuts();
     VFC.UI.renderAll();
-  },
-
-  _bindSettingsEvents() {
-    const ids = ['settingYear','settingMonth','settingMonthlyFee','settingBasePrice',
-      'settingMileage','settingDefaultKm','settingDefaultPassengers','settingCurrency'];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('change', () => this._onSettingsChange());
-    });
   },
 
   _bindKeyboardShortcuts() {
@@ -28,9 +18,12 @@ VFC.App = {
     });
   },
 
-  _onSettingsChange() {
+  _applySettings() {
     const data = VFC.Storage.getData();
     const s = data.settings;
+    const prevYear = s.year;
+    const prevMonth = s.month;
+
     s.year = parseInt(document.getElementById('settingYear').value) || new Date().getFullYear();
     s.month = parseInt(document.getElementById('settingMonth').value) || 1;
     s.monthlyFee = parseFloat(document.getElementById('settingMonthlyFee').value) || 0;
@@ -38,36 +31,32 @@ VFC.App = {
     s.mileage = parseFloat(document.getElementById('settingMileage').value) || 8;
     s.defaultKm = parseFloat(document.getElementById('settingDefaultKm').value) || 0;
     s.defaultPassengers = parseInt(document.getElementById('settingDefaultPassengers').value) || 1;
-    s.currency = document.getElementById('settingCurrency').value;
+    s.currency = document.getElementById('settingCurrency').value || 'PKR';
 
     const newKey = VFC.Utils.generateMonthKey(s.year, s.month);
     if (newKey !== data.currentKey) {
       VFC.Storage.switchToMonth(s.year, s.month);
-      VFC.UI.renderAll();
     } else {
       VFC.Storage.saveCurrentMonth();
     }
-    this._scheduleSave();
+    VFC.Storage.save();
     VFC.UI.renderAll();
+    VFC.UI.showToast('Settings applied');
   },
 
-  _onPetrolChange() {
+  _onPetrolChange(e) {
+    const el = e.target;
+    const id = parseFloat(el.dataset.id);
     const data = VFC.Storage.getData();
-    const entries = [];
-    document.querySelectorAll('.petrol-date').forEach(el => {
-      const id = parseInt(el.dataset.id);
-      const priceEl = document.querySelector(`.petrol-price[data-id="${id}"]`);
-      if (el.value && priceEl) {
-        entries.push({ id, date: el.value, price: parseFloat(priceEl.value) || 0 });
-      }
-    });
-    const displayedIds = new Set(entries.map(e => e.id));
-    for (const existing of data.petrolHistory) {
-      if (!displayedIds.has(existing.id)) {
-        entries.push(existing);
-      }
+    const entry = data.petrolHistory.find(p => p.id === id);
+    if (!entry) return;
+
+    if (el.classList.contains('petrol-date')) {
+      entry.date = el.value;
+    } else if (el.classList.contains('petrol-price')) {
+      entry.price = parseFloat(el.value) || 0;
     }
-    data.petrolHistory = entries;
+
     VFC.Storage.saveCurrentMonth();
     this._scheduleSave();
     VFC.UI.renderDailyTable();
@@ -113,7 +102,7 @@ VFC.App = {
     const data = VFC.Storage.getData();
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
-    data.petrolHistory.push({ id: Date.now() + Math.random(), date: dateStr, price: 0 });
+    data.petrolHistory.push({ id: Date.now(), date: dateStr, price: 0 });
     VFC.Storage.saveCurrentMonth();
     this._scheduleSave();
     VFC.UI.renderPetrolHistory();

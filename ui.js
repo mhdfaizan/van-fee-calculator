@@ -56,7 +56,7 @@ VFC.UI = {
     document.getElementById('settingMileage').value = s.mileage;
     document.getElementById('settingDefaultKm').value = s.defaultKm;
     document.getElementById('settingDefaultPassengers').value = s.defaultPassengers;
-    document.getElementById('settingCurrency').value = s.currency;
+    document.getElementById('settingCurrency').value = s.currency || 'PKR';
   },
 
   renderPetrolHistory() {

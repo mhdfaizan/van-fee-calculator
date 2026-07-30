@@ -1,10 +1,57 @@
 # Van Fee Calculator
 
+**Live App:** [mhdfaizan.github.io/van-fee-calculator](https://mhdfaizan.github.io/van-fee-calculator/)
+**Repository:** [github.com/mhdfaizan/van-fee-calculator](https://github.com/mhdfaizan/van-fee-calculator)
+
 Calculate monthly van fees based on daily petrol price fluctuations. A fully client-side Progressive Web App (PWA) that works entirely in the browser.
+
+---
+
+## How It Works
+
+### 1. Set Your Parameters
+
+Configure the month, monthly van fee, base petrol price (the price you budgeted for), vehicle mileage (km/L), default daily KM, and passenger count. Click **Apply Settings** to generate the calendar.
+
+### 2. Enter Petrol Price Changes
+
+Instead of entering a price for every single day, you only enter dates **when the petrol price changes**. For example, if price starts at ₱311/L on July 1 and rises to ₱316.15/L on July 18, you add two entries. The app automatically fills the correct price for each day in between.
+
+### 3. Review and Adjust Daily Data
+
+The app generates a full monthly calendar with all dates. Each row shows:
+- Whether it's a **working day** (weekdays default to Yes, weekends to No)
+- Whether it's a **holiday**
+- The **petrol price** (auto-filled from your history)
+- **KM driven** (auto-filled from default, editable)
+- **Passenger count** (auto-filled, editable)
+- Calculated fuel used, fuel cost, base cost, and extra cost
+- **Notes** for special trips, half days, etc.
+
+You can override any value on any day. Modified rows are highlighted in green. Holidays in red. Weekends in orange.
+
+### 4. Dashboard Updates Instantly
+
+All calculations update in real time as you edit:
+- Working days count, total KM, total fuel used
+- Average petrol price for the month
+- Base fuel cost (at your budgeted price) vs actual fuel cost
+- Extra fuel cost (the difference)
+- Original van fee vs revised van fee (original + extra fuel)
+- Per-passenger fee
+
+### 5. Charts and Reports
+
+- **Line chart** tracks daily petrol price trends
+- **Bar chart** shows daily fuel costs
+- **Pie chart** shows working vs non-working day split
+- **Export** as PDF, Excel, CSV, or print directly
+
+---
 
 ## Features
 
-- **Settings Management** — Configure year, month, monthly fee, base petrol price, mileage, default daily KM, passenger count, and currency
+- **Settings Management** — Configure year, month, monthly fee (PKR), base petrol price, mileage, default daily KM, and passenger count
 - **Petrol Price History** — Enter only dates when petrol prices change; daily prices auto-fill automatically
 - **Daily Calendar Table** — Auto-generates all dates for the selected month with inline editing for working days, holidays, KM driven, passengers, and notes
 - **Real-time Dashboard** — Working days, total KM, fuel used, average price, base/actual/extra costs, revised fee, and per-passenger fee — all updated instantly
@@ -26,20 +73,20 @@ Calculate monthly van fees based on daily petrol price fluctuations. A fully cli
 | Fuel Cost | Fuel Used × Daily Petrol Price |
 | Base Fuel Cost | Fuel Used × Base Petrol Price |
 | Extra Fuel Cost | Fuel Cost − Base Fuel Cost |
-| Actual Fuel Cost (total) | Sum of all daily fuel costs |
-| Base Fuel Cost (total) | Sum of all daily base fuel costs |
-| Extra Fuel Cost (total) | Actual − Base |
-| Revised Van Fee | Monthly Fee + Extra Fuel Cost |
+| Total Actual Fuel Cost | Sum of all daily fuel costs |
+| Total Base Fuel Cost | Sum of all daily base fuel costs |
+| Total Extra Fuel Cost | Total Actual − Total Base |
+| Revised Van Fee | Monthly Fee + Total Extra Fuel Cost |
 | Per Passenger Fee | Revised Fee / Average Passenger Count |
 
-Rows where **Working Day = false** are excluded from all calculations.
+Non-working days are excluded from all calculations.
 
 ## Installation
 
 No installation required. The app runs entirely in the browser.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/mhdfaizan/van-fee-calculator.git
 cd van-fee-calculator
 ```
 

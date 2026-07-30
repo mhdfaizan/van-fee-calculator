@@ -80,14 +80,10 @@
         </div>
         <div>
           <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Currency</label>
-          <select id="settingCurrency">
-            <option value="PHP">PHP (₱)</option><option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
-            <option value="JPY">JPY (¥)</option><option value="IDR">IDR (Rp)</option>
-          </select>
-        </div>
+          <input type="text" id="settingCurrency" value="PKR" readonly style="background:var(--bg);cursor:not-allowed">
       </div>
       <div class="flex flex-wrap gap-2 mt-4 no-print">
+        <button class="btn btn-primary" onclick="VFC.App._applySettings()">✅ Apply Settings</button>
         <button class="btn btn-secondary btn-sm" onclick="VFC.App._backup()">💾 Export Backup</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFileInput').click()">📂 Import Backup</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="VFC.App._restore(event)">
