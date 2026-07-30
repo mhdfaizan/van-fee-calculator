@@ -56,7 +56,7 @@ VFC.UI = {
     document.getElementById('settingMileage').value = s.mileage;
     document.getElementById('settingDefaultKm').value = s.defaultKm;
     document.getElementById('settingDefaultPassengers').value = s.defaultPassengers;
-    document.getElementById('settingCurrency').value = s.currency || 'PKR';
+
   },
 
   renderPetrolHistory() {
@@ -126,9 +126,9 @@ VFC.UI = {
         <td><input type="number" value="${km}" step="0.1" min="0" class="day-km" data-date="${d.date}" style="width:70px"></td>
         <td><input type="number" value="${passengers}" step="1" min="1" class="day-pass" data-date="${d.date}" style="width:60px"></td>
         <td class="text-right font-mono">${calc.fuelUsed.toFixed(2)}</td>
-        <td class="text-right font-mono">${VFC.Utils.formatCurrency(calc.fuelCost, s.currency, s.decimalPlaces)}</td>
-        <td class="text-right font-mono">${VFC.Utils.formatCurrency(calc.baseFuelCost, s.currency, s.decimalPlaces)}</td>
-        <td class="text-right font-mono" style="${calc.extraFuelCost > 0 ? 'color:var(--orange);font-weight:600' : ''}">${VFC.Utils.formatCurrency(calc.extraFuelCost, s.currency, s.decimalPlaces)}</td>
+        <td class="text-right font-mono">${VFC.Utils.formatCurrency(calc.fuelCost, s.decimalPlaces)}</td>
+        <td class="text-right font-mono">${VFC.Utils.formatCurrency(calc.baseFuelCost, s.decimalPlaces)}</td>
+        <td class="text-right font-mono" style="${calc.extraFuelCost > 0 ? 'color:var(--orange);font-weight:600' : ''}">${VFC.Utils.formatCurrency(calc.extraFuelCost, s.decimalPlaces)}</td>
         <td><input type="text" value="${notes}" class="day-notes" data-date="${d.date}" placeholder="Notes..." style="width:130px"></td>
       `;
       tbody.appendChild(tr);
@@ -148,19 +148,18 @@ VFC.UI = {
     const data = VFC.Storage.getData();
     const s = data.settings;
     const stats = VFC.Calculations.calcMonth(data.dailyData, s);
-    const c = s.currency;
 
     const cards = [
       { label: 'Working Days', value: stats.workingDays, icon: '📅' },
       { label: 'Total KM', value: VFC.Utils.formatNumber(stats.totalKm, 1) + ' km', icon: '📏' },
       { label: 'Fuel Used', value: VFC.Utils.formatNumber(stats.totalFuelUsed, 2) + ' L', icon: '⛽' },
-      { label: 'Avg Petrol Price', value: VFC.Utils.formatCurrency(stats.avgPetrolPrice, c, 2), icon: '💰' },
-      { label: 'Base Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalBaseFuelCost, c, s.decimalPlaces), icon: '📊' },
-      { label: 'Actual Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalFuelCost, c, s.decimalPlaces), icon: '📈' },
-      { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, c, s.decimalPlaces), icon: '🔥' },
-      { label: 'Original Van Fee', value: VFC.Utils.formatCurrency(stats.originalFee, c, s.decimalPlaces), icon: '🏠' },
-      { label: 'Revised Van Fee', value: VFC.Utils.formatCurrency(stats.revisedFee, c, s.decimalPlaces), icon: '🔄' },
-      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, c, s.decimalPlaces), icon: '👤' }
+      { label: 'Avg Petrol Price', value: VFC.Utils.formatCurrency(stats.avgPetrolPrice, 2), icon: '💰' },
+      { label: 'Base Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces), icon: '📊' },
+      { label: 'Actual Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces), icon: '📈' },
+      { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces), icon: '🔥' },
+      { label: 'Original Van Fee', value: VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces), icon: '🏠' },
+      { label: 'Revised Van Fee', value: VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces), icon: '🔄' },
+      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces), icon: '👤' }
     ];
 
     const container = document.getElementById('dashboardContainer');

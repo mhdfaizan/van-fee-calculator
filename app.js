@@ -30,7 +30,7 @@ VFC.App = {
     s.mileage = parseFloat(document.getElementById('settingMileage').value) || 8;
     s.defaultKm = parseFloat(document.getElementById('settingDefaultKm').value) || 0;
     s.defaultPassengers = parseInt(document.getElementById('settingDefaultPassengers').value) || 1;
-    s.currency = document.getElementById('settingCurrency').value || 'PKR';
+
 
     const newKey = VFC.Utils.generateMonthKey(s.year, s.month);
     if (newKey !== data.currentKey) {
@@ -67,6 +67,9 @@ VFC.App = {
       entry.price = parseFloat(el.value) || 0;
     }
 
+    for (const dateKey in data.dailyData) {
+      data.dailyData[dateKey].petrolPrice = VFC.Utils.getPetrolPriceForDate(dateKey, data.petrolHistory);
+    }
     VFC.Storage.saveCurrentMonth();
     this._scheduleSave();
     VFC.UI.renderDailyTable();

@@ -26,7 +26,6 @@ VFC.Exports = {
       pdf.text(`${VFC.Utils.MONTHS[s.month - 1]} ${s.year}`, pageWidth / 2, 28, { align: 'center' });
 
       const stats = VFC.Calculations.calcMonth(data.dailyData, s);
-      const c = s.currency;
       let y = 38;
 
       const drawStat = (label, value) => {
@@ -39,13 +38,13 @@ VFC.Exports = {
       drawStat('Working Days', stats.workingDays);
       drawStat('Total KM', VFC.Utils.formatNumber(stats.totalKm, 1));
       drawStat('Total Fuel Used', VFC.Utils.formatNumber(stats.totalFuelUsed, 2) + ' L');
-      drawStat('Average Petrol Price', VFC.Utils.formatCurrency(stats.avgPetrolPrice, c, 2));
-      drawStat('Base Fuel Cost', VFC.Utils.formatCurrency(stats.totalBaseFuelCost, c, s.decimalPlaces));
-      drawStat('Actual Fuel Cost', VFC.Utils.formatCurrency(stats.totalFuelCost, c, s.decimalPlaces));
-      drawStat('Extra Fuel Cost', VFC.Utils.formatCurrency(stats.totalExtraFuelCost, c, s.decimalPlaces));
-      drawStat('Original Van Fee', VFC.Utils.formatCurrency(stats.originalFee, c, s.decimalPlaces));
-      drawStat('Revised Van Fee', VFC.Utils.formatCurrency(stats.revisedFee, c, s.decimalPlaces));
-      drawStat('Per Passenger Fee', VFC.Utils.formatCurrency(stats.perPassengerFee, c, s.decimalPlaces));
+      drawStat('Average Petrol Price', VFC.Utils.formatCurrency(stats.avgPetrolPrice, 2));
+      drawStat('Base Fuel Cost', VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces));
+      drawStat('Actual Fuel Cost', VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces));
+      drawStat('Extra Fuel Cost', VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces));
+      drawStat('Original Van Fee', VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces));
+      drawStat('Revised Van Fee', VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces));
+      drawStat('Per Passenger Fee', VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces));
 
       y += 8;
       pdf.setFontSize(12);
@@ -69,7 +68,7 @@ VFC.Exports = {
         const fuelCost = VFC.Calculations.calcFuelCost(fuelUsed, price);
 
         pdf.setFontSize(8);
-        const line = `${d.day} ${d.dayNameShort}: ${km}km, ${passengers}pax, ₱${price}/L = ${fuelUsed.toFixed(2)}L, ${VFC.Utils.formatCurrency(fuelCost, c, s.decimalPlaces)}`;
+        const line = `${d.day} ${d.dayNameShort}: ${km}km, ${passengers}pax, Rs. ${price}/L = ${fuelUsed.toFixed(2)}L, ${VFC.Utils.formatCurrency(fuelCost, s.decimalPlaces)}`;
         const lines = pdf.splitTextToSize(line, 180);
         pdf.text(lines, 14, y);
         y += 4 * lines.length;

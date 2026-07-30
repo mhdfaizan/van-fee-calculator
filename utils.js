@@ -4,8 +4,6 @@ VFC.Utils = {
   MONTHS: ['January','February','March','April','May','June','July','August','September','October','November','December'],
   DAYS: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   DAYS_SHORT: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
-  CURRENCY_SYMBOLS: { PKR: 'Rs. ', PHP: '₱', USD: '$', EUR: '€', GBP: '£', JPY: '¥', IDR: 'Rp' },
-
   getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
   },
@@ -54,15 +52,13 @@ VFC.Utils = {
       mileage: 8,
       defaultKm: 40,
       defaultPassengers: 4,
-      currency: 'PKR',
       decimalPlaces: 2
     };
   },
 
-  formatCurrency(amount, currency, decimals) {
-    const sym = this.CURRENCY_SYMBOLS[currency] || currency;
+  formatCurrency(amount, decimals) {
     const val = (amount || 0).toFixed(decimals || 2);
-    return `${sym}${val}`;
+    return `Rs. ${val}`;
   },
 
   formatNumber(val, decimals) {
