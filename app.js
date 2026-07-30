@@ -21,8 +21,7 @@ VFC.App = {
   _applySettings() {
     const data = VFC.Storage.getData();
     const s = data.settings;
-    const prevYear = s.year;
-    const prevMonth = s.month;
+    const prevKey = data.currentKey;
 
     s.year = parseInt(document.getElementById('settingYear').value) || new Date().getFullYear();
     s.month = parseInt(document.getElementById('settingMonth').value) || 1;
@@ -39,6 +38,17 @@ VFC.App = {
     } else {
       VFC.Storage.saveCurrentMonth();
     }
+
+    for (const dateKey in data.dailyData) {
+      const day = data.dailyData[dateKey];
+      if (!day.edited) {
+        day.kmDriven = s.defaultKm;
+        day.passengers = s.defaultPassengers;
+      }
+      day.petrolPrice = VFC.Utils.getPetrolPriceForDate(dateKey, data.petrolHistory);
+    }
+
+    VFC.Storage.saveCurrentMonth();
     VFC.Storage.save();
     VFC.UI.renderAll();
     VFC.UI.showToast('Settings applied');
@@ -64,7 +74,14 @@ VFC.App = {
     VFC.Charts.update();
   },
 
-  _onDailyChange() {
+  _onDailyChange(e) {
+    const tr = e.target && e.target.closest('tr');
+    if (tr && tr.dataset.date) {
+      const data = VFC.Storage.getData();
+      if (data.dailyData[tr.dataset.date]) {
+        data.dailyData[tr.dataset.date].edited = true;
+      }
+    }
     this._collectDailyData();
     VFC.Storage.saveCurrentMonth();
     this._scheduleSave();
