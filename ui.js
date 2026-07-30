@@ -247,11 +247,11 @@ VFC.UI = {
       { label: 'Base Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces), icon: '📊' },
       { label: 'Actual Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces), icon: '📈' },
       { label: 'Original Van Fee', value: VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces), icon: '🏠' },
-      { label: 'Base / Person', value: VFC.Utils.formatCurrency(basePerPerson, s.decimalPlaces), icon: '👤' },
       { label: 'Revised Van Fee', value: VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces), icon: '🔄' },
+      { label: 'Base / Person', value: VFC.Utils.formatCurrency(basePerPerson, s.decimalPlaces), icon: '👤' },
+      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces), icon: '💰' },
       { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces), icon: '🔥' },
-      { label: 'Extra / Person', value: VFC.Utils.formatCurrency(extraPerPerson, s.decimalPlaces), icon: '👤' },
-      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces), icon: '💰' }
+      { label: 'Extra / Person', value: VFC.Utils.formatCurrency(extraPerPerson, s.decimalPlaces), icon: '👤' }
     ];
 
     const container = document.getElementById('dashboardContainer');
@@ -265,44 +265,5 @@ VFC.UI = {
       `;
       container.appendChild(div);
     }
-
-    const comparison = document.createElement('div');
-    comparison.style.cssText = 'grid-column:1/-1;margin-top:8px';
-    comparison.innerHTML = `
-      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto">
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 Base vs Actual</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border)">
-              <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600">Metric</th>
-              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Base</th>
-              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Actual</th>
-              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Difference</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:8px 12px;color:var(--text)">Fuel Cost</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces)}</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces)}</td>
-              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.totalExtraFuelCost > 0 ? 'var(--orange)' : 'var(--text)'}">${stats.totalExtraFuelCost > 0 ? '+' : ''}${VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces)}</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:8px 12px;color:var(--text)">Fuel Rate (Rs./L)</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(s.basePetrolPrice, 2)}</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.avgPetrolPrice, 2)}</td>
-              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.avgPetrolPrice > s.basePetrolPrice ? 'var(--orange)' : 'var(--text)'}">${stats.avgPetrolPrice > s.basePetrolPrice ? '+' : ''}${VFC.Utils.formatCurrency(stats.avgPetrolPrice - s.basePetrolPrice, 2)}</td>
-            </tr>
-            <tr>
-              <td style="padding:8px 12px;color:var(--text)">Van Fee</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces)}</td>
-              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces)}</td>
-              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.totalExtraFuelCost > 0 ? 'var(--orange)' : 'var(--text)'}">${stats.totalExtraFuelCost > 0 ? '+' : ''}${VFC.Utils.formatCurrency(stats.revisedFee - stats.originalFee, s.decimalPlaces)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    container.appendChild(comparison);
   }
 };
