@@ -222,6 +222,119 @@ VFC.App = {
     VFC.UI.renderDashboard();
     VFC.Charts.update();
     VFC.UI.showToast('Petrol history duplicated');
+  },
+
+  _psoEntries: null,
+
+  _parsePsoDate(text) {
+    const months = {
+      'January':1,'February':2,'March':3,'April':4,'May':5,'June':6,
+      'July':7,'August':8,'September':9,'October':10,'November':11,'December':12
+    };
+    const m = text.trim().match(/^(\w+)\s+(\d+),\s+(\d{4})$/);
+    if (!m) return null;
+    const month = months[m[1]];
+    if (!month) return null;
+    return `${m[3]}-${String(month).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
+  },
+
+  _parsePsoHtml(html, fromDate, toDate) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const entries = [];
+    let oldestDate = null;
+    const links = doc.querySelectorAll('a.uk-accordion-title');
+    for (const link of links) {
+      const text = link.textContent.trim();
+      const dateMatch = text.match(/Effective From:\s*(.+)/);
+      if (!dateMatch) continue;
+      const dateStr = this._parsePsoDate(dateMatch[1]);
+      if (!dateStr) continue;
+      if (!oldestDate || dateStr < oldestDate) oldestDate = dateStr;
+      if (dateStr < fromDate || dateStr > toDate) continue;
+      const content = link.nextElementSibling;
+      if (!content) continue;
+      const rows = content.querySelectorAll('table tbody tr');
+      for (const row of rows) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 2 && cells[0].textContent.trim() === 'PREMIER EURO 5') {
+          const pm = cells[1].textContent.trim().match(/Rs\.?\s*([\d.]+)/);
+          if (pm) entries.push({ date: dateStr, price: parseFloat(pm[1]) });
+        }
+      }
+    }
+    return { entries, oldestDate };
+  },
+
+  async _doPsoFetch() {
+    const fromDate = document.getElementById('psoFromDate').value;
+    const toDate = document.getElementById('psoToDate').value;
+    if (!fromDate || !toDate) { VFC.UI.showToast('Select a date range'); return; }
+    VFC.UI._setPsoStatus('Fetching PSO prices...');
+    document.getElementById('psoFetchBtn').disabled = true;
+    const proxyBase = 'https://corsproxy.io/?url=';
+    this._psoEntries = [];
+    let page = 1;
+    let ok = true;
+    while (ok && page <= 41) {
+      const url = proxyBase + encodeURIComponent(`https://psopk.com/fuel-prices/pol/archives?page=${page}`);
+      try {
+        const r = await fetch(url);
+        if (!r.ok) { ok = false; break; }
+        const html = await r.text();
+        const result = this._parsePsoHtml(html, fromDate, toDate);
+        this._psoEntries.push(...result.entries);
+        if (result.oldestDate && result.oldestDate < fromDate) break;
+        page++;
+      } catch {
+        ok = false;
+        break;
+      }
+    }
+    document.getElementById('psoFetchBtn').disabled = false;
+    if (!ok && this._psoEntries.length === 0) {
+      VFC.UI._setPsoStatus('Auto-fetch failed. Use the manual paste option below.');
+      VFC.UI._showPsoFallback();
+      return;
+    }
+    VFC.UI._showPsoPreview(this._psoEntries);
+  },
+
+  _doPsoParse() {
+    const html = document.getElementById('psoPasteArea').value;
+    if (!html.trim()) { VFC.UI.showToast('Paste the PSO page HTML first'); return; }
+    const fromDate = document.getElementById('psoFromDate').value;
+    const toDate = document.getElementById('psoToDate').value;
+    const result = this._parsePsoHtml(html, fromDate, toDate);
+    this._psoEntries = result.entries;
+    VFC.UI._showPsoPreview(this._psoEntries);
+  },
+
+  _doPsoImport() {
+    if (!this._psoEntries || this._psoEntries.length === 0) {
+      VFC.UI.showToast('No entries to import');
+      return;
+    }
+    const data = VFC.Storage.getData();
+    const existing = new Set(data.petrolHistory.map(e => e.date));
+    let added = 0;
+    for (const entry of this._psoEntries) {
+      if (!existing.has(entry.date)) {
+        data.petrolHistory.push({ id: Date.now() + added, date: entry.date, price: entry.price });
+        added++;
+      }
+    }
+    if (added === 0) {
+      VFC.UI.showToast('All entries already in history');
+      VFC.UI._closePsoImport();
+      return;
+    }
+    VFC.Storage.saveCurrentMonth();
+    this._scheduleSave();
+    this._reapplyPetrolPrices();
+    VFC.UI.renderPetrolHistory();
+    VFC.UI.showToast(`Imported ${added} price entries from PSO`);
+    VFC.UI._closePsoImport();
   }
 };
 

@@ -144,6 +144,94 @@ VFC.UI = {
     });
   },
 
+  _openPsoImport() {
+    const data = VFC.Storage.getData();
+    const s = data.settings;
+    const lastDay = new Date(s.year, s.month, 0).getDate();
+    const fromVal = `${s.year}-${String(s.month).padStart(2,'0')}-01`;
+    const toVal = `${s.year}-${String(s.month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+    const overlay = document.createElement('div');
+    overlay.id = 'psoImportOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px';
+    const modal = document.createElement('div');
+    modal.style.cssText = `background:var(--bg-card);border-radius:12px;padding:24px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)`;
+    modal.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text)">⛽ Import from PSO</h3>
+        <button class="btn btn-secondary btn-sm" id="psoCloseBtn">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px 0">Fetches PREMIER EURO 5 prices from <code style="font-size:12px;background:var(--bg-input);padding:1px 5px;border-radius:3px">psopk.com/fuel-prices/pol/archives</code></p>
+      <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
+        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">From Date</label><input type="date" id="psoFromDate" value="${fromVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:13px"></div>
+        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">To Date</label><input type="date" id="psoToDate" value="${toVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:13px"></div>
+        <div><button class="btn btn-primary btn-sm" id="psoFetchBtn">Fetch from PSO</button></div>
+      </div>
+      <div id="psoStatus" style="font-size:13px;margin-bottom:8px;color:var(--text-muted)"></div>
+      <div id="psoPreview" style="margin-bottom:12px"></div>
+      <div id="psoFallback" style="display:none;margin-top:8px">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px">Auto-fetch failed. Paste the entire PSO archives page HTML below:</p>
+        <textarea id="psoPasteArea" rows="6" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
+        <div style="margin-top:8px"><button class="btn btn-primary btn-sm" id="psoParseBtn">Parse HTML</button></div>
+      </div>
+      <div id="psoImportArea" style="display:none;margin-top:12px;text-align:right">
+        <button class="btn btn-primary" id="psoImportBtn">Import Entries</button>
+      </div>`;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    document.getElementById('psoCloseBtn').onclick = () => this._closePsoImport();
+    overlay.addEventListener('click', e => { if (e.target === overlay) this._closePsoImport(); });
+    document.getElementById('psoFetchBtn').onclick = () => VFC.App._doPsoFetch();
+    document.getElementById('psoParseBtn').onclick = () => VFC.App._doPsoParse();
+    document.getElementById('psoImportBtn').onclick = () => VFC.App._doPsoImport();
+  },
+
+  _closePsoImport() {
+    const el = document.getElementById('psoImportOverlay');
+    if (el) el.remove();
+  },
+
+  _setPsoStatus(msg) {
+    const el = document.getElementById('psoStatus');
+    if (el) el.textContent = msg;
+  },
+
+  _showPsoFallback() {
+    const el = document.getElementById('psoFallback');
+    if (el) el.style.display = 'block';
+  },
+
+  _showPsoPreview(entries) {
+    if (!entries || entries.length === 0) {
+      this._setPsoStatus('No matching price entries found in this date range.');
+      return;
+    }
+    const container = document.getElementById('psoPreview');
+    const importArea = document.getElementById('psoImportArea');
+    if (!container) return;
+    let html = `<p style="font-size:13px;margin-bottom:8px;color:var(--text)">Found <strong>${entries.length}</strong> effective date(s):</p>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:600">Effective Date</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600">Price (Rs./L)</th>
+      </tr></thead><tbody>`;
+    for (const e of entries) {
+      const d = new Date(e.date + 'T00:00:00');
+      const label = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+      html += `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 10px;color:var(--text)">${label}</td>
+        <td style="padding:6px 10px;text-align:right;color:var(--text);font-weight:600">Rs. ${e.price.toFixed(2)}</td>
+      </tr>`;
+    }
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+    this._setPsoStatus('');
+    if (importArea) {
+      importArea.style.display = 'block';
+      const btn = document.getElementById('psoImportBtn');
+      if (btn) btn.textContent = `Import ${entries.length} Entries`;
+    }
+  },
+
   renderDashboard() {
     const data = VFC.Storage.getData();
     const s = data.settings;
