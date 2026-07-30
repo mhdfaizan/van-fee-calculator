@@ -151,23 +151,23 @@ VFC.UI = {
     overlay.id = 'psoImportOverlay';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px';
     const modal = document.createElement('div');
-    modal.style.cssText = `background:var(--bg-card);border-radius:12px;padding:24px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)`;
+    modal.style.cssText = `background:var(--card-bg);border-radius:12px;padding:24px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)`;
     modal.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text)">⛽ Import from PSO</h3>
         <button class="btn btn-secondary btn-sm" id="psoCloseBtn">✕</button>
       </div>
-      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px 0">Fetches PREMIER EURO 5 prices from <code style="font-size:12px;background:var(--bg-input);padding:1px 5px;border-radius:3px">psopk.com/fuel-prices/pol/archives</code></p>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px 0">Fetches PREMIER EURO 5 prices from <code style="font-size:12px;background:var(--card-bg);padding:1px 5px;border-radius:3px">psopk.com/fuel-prices/pol/archives</code></p>
       <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
-        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">From Date</label><input type="date" id="psoFromDate" value="${fromVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:13px"></div>
-        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">To Date</label><input type="date" id="psoToDate" value="${toVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:13px"></div>
+        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">From Date</label><input type="date" id="psoFromDate" value="${fromVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:13px"></div>
+        <div><label style="display:block;font-size:12px;margin-bottom:4px;color:var(--text-muted)">To Date</label><input type="date" id="psoToDate" value="${toVal}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:13px"></div>
         <div><button class="btn btn-primary btn-sm" id="psoFetchBtn">Fetch from PSO</button></div>
       </div>
       <div id="psoStatus" style="font-size:13px;margin-bottom:8px;color:var(--text-muted)"></div>
       <div id="psoPreview" style="margin-bottom:12px"></div>
       <div id="psoFallback" style="display:none;margin-top:8px">
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px">Auto-fetch failed. Paste the entire PSO archives page HTML below:</p>
-        <textarea id="psoPasteArea" rows="6" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
+        <textarea id="psoPasteArea" rows="6" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
         <div style="margin-top:8px"><button class="btn btn-primary btn-sm" id="psoParseBtn">Parse HTML</button></div>
       </div>
       <div id="psoImportArea" style="display:none;margin-top:12px;text-align:right">
@@ -236,6 +236,8 @@ VFC.UI = {
 
     const extraPerPerson = stats.avgPassengers > 0
       ? stats.totalExtraFuelCost / stats.avgPassengers : 0;
+    const basePerPerson = stats.avgPassengers > 0
+      ? stats.originalFee / stats.avgPassengers : 0;
 
     const cards = [
       { label: 'Working Days', value: stats.workingDays, icon: '📅' },
@@ -245,6 +247,7 @@ VFC.UI = {
       { label: 'Base Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces), icon: '📊' },
       { label: 'Actual Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces), icon: '📈' },
       { label: 'Original Van Fee', value: VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces), icon: '🏠' },
+      { label: 'Base / Person', value: VFC.Utils.formatCurrency(basePerPerson, s.decimalPlaces), icon: '👤' },
       { label: 'Revised Van Fee', value: VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces), icon: '🔄' },
       { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces), icon: '🔥' },
       { label: 'Extra / Person', value: VFC.Utils.formatCurrency(extraPerPerson, s.decimalPlaces), icon: '👤' },
@@ -266,7 +269,7 @@ VFC.UI = {
     const comparison = document.createElement('div');
     comparison.style.cssText = 'grid-column:1/-1;margin-top:8px';
     comparison.innerHTML = `
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto">
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto">
         <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 Base vs Actual</div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
