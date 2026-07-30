@@ -113,7 +113,6 @@ VFC.App = {
       const date = tr.dataset.date;
       if (!date) return;
       const working = tr.querySelector('.day-working').checked;
-      const holiday = tr.querySelector('.day-holiday').checked;
       const price = parseFloat(tr.querySelector('.day-price').value) || 0;
       const km = parseFloat(tr.querySelector('.day-km').value) || 0;
       const passengers = parseInt(tr.querySelector('.day-pass').value) || 1;
@@ -122,7 +121,7 @@ VFC.App = {
       const existing = data.dailyData[date];
       const edited = existing ? existing.edited : false;
 
-      data.dailyData[date] = { working, holiday, petrolPrice: price, kmDriven: km, passengers, notes, edited };
+      data.dailyData[date] = { working, petrolPrice: price, kmDriven: km, passengers, notes, edited };
     });
   },
 

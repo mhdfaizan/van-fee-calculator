@@ -97,7 +97,6 @@ VFC.UI = {
     for (const d of dates) {
       const dayData = data.dailyData[d.date] || {};
       const working = dayData.working !== undefined ? dayData.working : !d.isWeekend;
-      const holiday = dayData.holiday || false;
       const edited = dayData.edited || false;
       const petrolPrice = dayData.petrolPrice !== undefined ? dayData.petrolPrice :
         VFC.Utils.getPetrolPriceForDate(d.date, data.petrolHistory);
@@ -110,8 +109,7 @@ VFC.UI = {
       }, s);
 
       let rowClass = '';
-      if (holiday) rowClass = 'row-holiday';
-      else if (d.isWeekend) rowClass = 'row-weekend';
+      if (d.isWeekend) rowClass = 'row-weekend';
       if (edited) rowClass += ' row-edited';
 
       const tr = document.createElement('tr');
@@ -121,7 +119,6 @@ VFC.UI = {
         <td class="whitespace-nowrap font-medium">${d.day} ${d.dayNameShort}</td>
         <td class="whitespace-nowrap" style="color:var(--text-muted);font-size:0.75rem">${d.dayName}</td>
         <td><input type="checkbox" ${working ? 'checked' : ''} class="day-working" data-date="${d.date}"></td>
-        <td><input type="checkbox" ${holiday ? 'checked' : ''} class="day-holiday" data-date="${d.date}"></td>
         <td><input type="number" value="${petrolPrice}" step="0.01" min="0" class="day-price" data-date="${d.date}" style="width:80px"></td>
         <td><input type="number" value="${km}" step="0.1" min="0" class="day-km" data-date="${d.date}" style="width:70px"></td>
         <td><input type="number" value="${passengers}" step="1" min="1" class="day-pass" data-date="${d.date}" style="width:60px"></td>
@@ -137,7 +134,7 @@ VFC.UI = {
   },
 
   _bindDailyEvents() {
-    const selector = '.day-working, .day-holiday, .day-price, .day-km, .day-pass, .day-notes';
+    const selector = '.day-working, .day-price, .day-km, .day-pass, .day-notes';
     document.querySelectorAll(selector).forEach(el => {
       el.addEventListener('change', e => VFC.App._onDailyChange(e));
       el.addEventListener('input', e => VFC.App._onDailyInput(e));
@@ -237,6 +234,9 @@ VFC.UI = {
     const s = data.settings;
     const stats = VFC.Calculations.calcMonth(data.dailyData, s);
 
+    const extraPerPerson = stats.avgPassengers > 0
+      ? stats.totalExtraFuelCost / stats.avgPassengers : 0;
+
     const cards = [
       { label: 'Working Days', value: stats.workingDays, icon: '📅' },
       { label: 'Total KM', value: VFC.Utils.formatNumber(stats.totalKm, 1) + ' km', icon: '📏' },
@@ -244,10 +244,11 @@ VFC.UI = {
       { label: 'Avg Petrol Price', value: VFC.Utils.formatCurrency(stats.avgPetrolPrice, 2), icon: '💰' },
       { label: 'Base Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces), icon: '📊' },
       { label: 'Actual Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces), icon: '📈' },
-      { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces), icon: '🔥' },
       { label: 'Original Van Fee', value: VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces), icon: '🏠' },
       { label: 'Revised Van Fee', value: VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces), icon: '🔄' },
-      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces), icon: '👤' }
+      { label: 'Extra Fuel Cost', value: VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces), icon: '🔥' },
+      { label: 'Extra / Person', value: VFC.Utils.formatCurrency(extraPerPerson, s.decimalPlaces), icon: '👤' },
+      { label: 'Per Passenger Fee', value: VFC.Utils.formatCurrency(stats.perPassengerFee, s.decimalPlaces), icon: '💰' }
     ];
 
     const container = document.getElementById('dashboardContainer');
@@ -261,5 +262,44 @@ VFC.UI = {
       `;
       container.appendChild(div);
     }
+
+    const comparison = document.createElement('div');
+    comparison.style.cssText = 'grid-column:1/-1;margin-top:8px';
+    comparison.innerHTML = `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">📊 Base vs Actual</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:600">Metric</th>
+              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Base</th>
+              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Actual</th>
+              <th style="padding:8px 12px;text-align:right;color:var(--text-muted);font-weight:600">Difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 12px;color:var(--text)">Fuel Cost</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.totalBaseFuelCost, s.decimalPlaces)}</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.totalFuelCost, s.decimalPlaces)}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.totalExtraFuelCost > 0 ? 'var(--orange)' : 'var(--text)'}">${stats.totalExtraFuelCost > 0 ? '+' : ''}${VFC.Utils.formatCurrency(stats.totalExtraFuelCost, s.decimalPlaces)}</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 12px;color:var(--text)">Fuel Rate (Rs./L)</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(s.basePetrolPrice, 2)}</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.avgPetrolPrice, 2)}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.avgPetrolPrice > s.basePetrolPrice ? 'var(--orange)' : 'var(--text)'}">${stats.avgPetrolPrice > s.basePetrolPrice ? '+' : ''}${VFC.Utils.formatCurrency(stats.avgPetrolPrice - s.basePetrolPrice, 2)}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;color:var(--text)">Van Fee</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.originalFee, s.decimalPlaces)}</td>
+              <td style="padding:8px 12px;text-align:right;color:var(--text)">${VFC.Utils.formatCurrency(stats.revisedFee, s.decimalPlaces)}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:600;color:${stats.totalExtraFuelCost > 0 ? 'var(--orange)' : 'var(--text)'}">${stats.totalExtraFuelCost > 0 ? '+' : ''}${VFC.Utils.formatCurrency(stats.revisedFee - stats.originalFee, s.decimalPlaces)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.appendChild(comparison);
   }
 };

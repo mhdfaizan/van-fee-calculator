@@ -191,20 +191,12 @@ tr:hover td { background: rgba(59,130,246,0.03); }
   background: var(--orange-bg);
 }
 
-.row-holiday td {
-  background: var(--red-bg);
-}
-
 .row-edited td {
   background: rgba(34,197,94,0.08);
 }
 
 .row-weekend.row-edited td {
   background: linear-gradient(135deg, var(--orange-bg) 0%, rgba(34,197,94,0.08) 100%);
-}
-
-.row-holiday.row-edited td {
-  background: linear-gradient(135deg, var(--red-bg) 0%, rgba(34,197,94,0.08) 100%);
 }
 
 .chart-container {
