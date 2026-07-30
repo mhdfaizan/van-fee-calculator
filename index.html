@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Van Fee Calculator - Calculate monthly van fees based on daily petrol price fluctuations">
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚐</text></svg>" type="image/svg+xml">
+  <title>Van Fee Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: false }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="sticky-header px-4 py-3" id="mainHeader">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🚐</span>
+        <div>
+          <h1 class="text-lg font-bold" style="color:var(--text)">Van Fee Calculator</h1>
+          <p class="text-xs" style="color:var(--text-muted)" id="headerMonth">Loading...</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="VFC.App._undo()" title="Undo (Ctrl+Z)" id="undoBtn">↩</button>
+        <button class="btn btn-secondary btn-sm" onclick="VFC.App._redo()" title="Redo (Ctrl+Y)" id="redoBtn">↪</button>
+        <button class="btn btn-secondary btn-sm no-print" onclick="VFC.UI.toggleDarkMode()" id="darkToggle" title="Toggle Dark Mode">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6" id="mainContent">
+
+    <section class="card p-4 sm:p-6" id="settingsSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">⚙️ Settings</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" id="settingsContainer">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Year</label>
+          <input type="number" id="settingYear" min="2020" max="2100" value="2026">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Month</label>
+          <select id="settingMonth">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Monthly Van Fee</label>
+          <input type="number" id="settingMonthlyFee" min="0" step="0.01" value="0">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Base Petrol Price</label>
+          <input type="number" id="settingBasePrice" min="0" step="0.01" value="0">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Mileage (km/L)</label>
+          <input type="number" id="settingMileage" min="0.1" step="0.1" value="8">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Default Daily KM</label>
+          <input type="number" id="settingDefaultKm" min="0" step="0.1" value="40">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Default Passengers</label>
+          <input type="number" id="settingDefaultPassengers" min="1" step="1" value="4">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--text-muted)">Currency</label>
+          <select id="settingCurrency">
+            <option value="PHP">PHP (₱)</option><option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+            <option value="JPY">JPY (¥)</option><option value="IDR">IDR (Rp)</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4 no-print">
+        <button class="btn btn-secondary btn-sm" onclick="VFC.App._backup()">💾 Export Backup</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFileInput').click()">📂 Import Backup</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="VFC.App._restore(event)">
+        <button class="btn btn-danger btn-sm" onclick="VFC.App._resetAll()">🗑️ Reset All Data</button>
+      </div>
+    </section>
+
+    <section class="card p-4 sm:p-6" id="petrolSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">⛽ Petrol Price History</h2>
+      <p class="text-xs mb-3" style="color:var(--text-muted)">Enter dates when petrol price changes. Daily prices are auto-filled.</p>
+      <div class="overflow-x-auto scrollbar-thin">
+        <table>
+          <thead>
+            <tr>
+              <th style="min-width:130px">Effective Date</th>
+              <th style="min-width:100px">Petrol Price</th>
+              <th style="width:60px">Action</th>
+            </tr>
+          </thead>
+          <tbody id="petrolHistoryBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-primary btn-sm mt-3 no-print" onclick="VFC.App._addPetrolPrice()">+ Add New Price</button>
+    </section>
+
+    <section class="card p-4 sm:p-6" id="calendarSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">📅 Daily Calendar Table</h2>
+      <div class="table-container scrollbar-thin" id="dailyTableContainer">
+        <table>
+          <thead>
+            <tr>
+              <th style="min-width:50px">Date</th>
+              <th style="min-width:50px">Day</th>
+              <th style="width:45px">Work</th>
+              <th style="width:45px">Holiday</th>
+              <th style="min-width:75px">Price</th>
+              <th style="min-width:65px">KM</th>
+              <th style="min-width:60px">Pass</th>
+              <th style="min-width:60px">Fuel L</th>
+              <th style="min-width:70px">Fuel Cost</th>
+              <th style="min-width:70px">Base Cost</th>
+              <th style="min-width:70px">Extra</th>
+              <th style="min-width:140px">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="dailyTableBody"></tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-3 no-print">
+        <button class="btn btn-secondary btn-sm" onclick="VFC.App._clonePrevMonth()">📋 Clone Previous Month</button>
+        <button class="btn btn-secondary btn-sm" onclick="VFC.App._duplicatePetrolHistory()">⛽ Duplicate Petrol History</button>
+      </div>
+    </section>
+
+    <section class="card p-4 sm:p-6" id="dashboardSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">📊 Dashboard</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="dashboardContainer"></div>
+    </section>
+
+    <section class="card p-4 sm:p-6" id="chartsSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">📈 Charts</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="chart-container" id="priceChartContainer">
+          <canvas id="priceChart"></canvas>
+        </div>
+        <div class="chart-container" id="costChartContainer">
+          <canvas id="costChart"></canvas>
+        </div>
+        <div class="chart-container" id="workChartContainer">
+          <canvas id="workChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card p-4 sm:p-6" id="reportsSection">
+      <h2 class="text-base font-bold mb-4" style="color:var(--text)">📄 Reports</h2>
+      <div class="flex flex-wrap gap-2 no-print">
+        <button class="btn btn-primary btn-sm" onclick="VFC.Exports.printReport()">🖨️ Print Report</button>
+        <button class="btn btn-primary btn-sm" onclick="VFC.Exports.exportPdf()">📕 Export PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="VFC.Exports.exportExcel()">📗 Export Excel</button>
+        <button class="btn btn-secondary btn-sm" onclick="VFC.Exports.exportCsv()">📄 Export CSV</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-4 text-xs" style="color:var(--text-muted)" id="appFooter">
+    Van Fee Calculator &mdash; All data stored locally in your browser
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="utils.js"></script>
+  <script src="storage.js"></script>
+  <script src="calculations.js"></script>
+  <script src="ui.js"></script>
+  <script src="charts.js"></script>
+  <script src="exports.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
