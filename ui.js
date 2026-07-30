@@ -78,10 +78,10 @@ VFC.UI = {
 
   _bindPetrolEvents() {
     document.querySelectorAll('.petrol-date').forEach(el => {
-      el.addEventListener('change', VFC.App._onPetrolChange);
+      el.addEventListener('change', e => VFC.App._onPetrolChange(e));
     });
     document.querySelectorAll('.petrol-price').forEach(el => {
-      el.addEventListener('change', VFC.App._onPetrolChange);
+      el.addEventListener('change', e => VFC.App._onPetrolChange(e));
     });
   },
 
@@ -139,8 +139,8 @@ VFC.UI = {
   _bindDailyEvents() {
     const selector = '.day-working, .day-holiday, .day-price, .day-km, .day-pass, .day-notes';
     document.querySelectorAll(selector).forEach(el => {
-      el.addEventListener('change', VFC.App._onDailyChange);
-      el.addEventListener('input', VFC.App._onDailyInput);
+      el.addEventListener('change', e => VFC.App._onDailyChange(e));
+      el.addEventListener('input', e => VFC.App._onDailyInput(e));
     });
   },
 
